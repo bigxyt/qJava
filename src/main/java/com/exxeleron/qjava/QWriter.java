@@ -27,7 +27,7 @@ import java.io.OutputStream;
 public abstract class QWriter {
 
     protected OutputStream stream;
-    private String encoding;
+    private String encoding = QBasicConnection.DEFAULT_ENCODING;
     protected ByteOutputStream writer = new ByteOutputStream();
     protected ByteOutputStream header = new ByteOutputStream(8);
 
@@ -37,7 +37,7 @@ public abstract class QWriter {
     /**
      * Sets the output stream for serialization.
      *
-     * @param outputStream
+     * @param stream
      *            Output stream for serialized messages
      */
     void setStream( final OutputStream stream ) {
@@ -94,6 +94,10 @@ public abstract class QWriter {
      * @throws QException
      */
     public int write( final Object obj, final QConnection.MessageType msgType ) throws IOException, QException {
+        if (stream == null) {
+            throw new IOException("Connection is not established.");
+        }
+
         // serialize object
         writer.reset();
         writeObject(obj);

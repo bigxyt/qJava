@@ -34,7 +34,7 @@ public abstract class QReader {
 
     protected DataInputStream stream;
     protected ByteInputStream reader;
-    private String encoding;
+    private String encoding = QBasicConnection.DEFAULT_ENCODING;
 
     protected byte[] header;
     protected byte[] rawData;

@@ -105,7 +105,7 @@ public class QBasicConnection implements QConnection {
         }
     }
 
-    private void initSocket() throws UnknownHostException, IOException {
+    private void initSocket() throws IOException {
         connection = new Socket(host, port);
         connection.setTcpNoDelay(true);
         inputStream = new DataInputStream(connection.getInputStream());
@@ -187,7 +187,7 @@ public class QBasicConnection implements QConnection {
      * {@inheritDoc}
      */
     public int query( final QConnection.MessageType msgType, final String query, final Object... parameters ) throws QException, IOException {
-        if ( connection == null ) {
+        if ( !isConnected() ) {
             throw new IOException("Connection is not established.");
         }
 
