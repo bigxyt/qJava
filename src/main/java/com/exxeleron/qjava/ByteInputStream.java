@@ -11,6 +11,7 @@ public final class ByteInputStream {
 
     private byte[] buffer;
     private int position;
+    private int mark;
     private String encoding;
 
     private ByteInputStreamReader reader;
@@ -19,7 +20,7 @@ public final class ByteInputStream {
 
     /**
      * Creates new {@link ByteInputStream}.
-     * 
+     *
      * @param encoding
      *            encoding for symbols conversion
      * @param endianess
@@ -34,19 +35,35 @@ public final class ByteInputStream {
     }
 
     /**
+     * Marks the current position in this stream. A subsequent call to the reset method repositions this stream at the last marked position
+     * so that subsequent reads re-read the same bytes.
+     */
+    public void mark() {
+        mark = position;
+    }
+
+    /**
+     * Repositions this stream to the position at the time the mark method was last called on this stream.
+     */
+    public void reset() {
+        position = mark;
+    }
+
+    /**
      * Wraps byte buffer and resets reading position.
-     * 
+     *
      * @param newBuffer
      *            byte buffer to be wrapped
      */
     public void wrap( final byte[] newBuffer ) {
         buffer = newBuffer;
         position = 0;
+        mark = 0;
     }
 
     /**
      * Copies part of the wrapped byte buffer into a new array.
-     * 
+     *
      * @param dest
      *            destination buffer
      * @param start
@@ -61,7 +78,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single byte from the wrapped buffer.
-     * 
+     *
      * @return the <code>byte</code>
      */
     public byte get() {
@@ -70,7 +87,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single short value from the wrapped buffer.
-     * 
+     *
      * @return the <code>short</code>
      */
     public short getShort() {
@@ -79,7 +96,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single int value from the wrapped buffer.
-     * 
+     *
      * @return the <code>int</code>
      */
     public int getInt() {
@@ -88,7 +105,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single long value from the wrapped buffer.
-     * 
+     *
      * @return the <code>long</code>
      */
     public long getLong() {
@@ -97,7 +114,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single float value from the wrapped buffer.
-     * 
+     *
      * @return the <code>float</code>
      */
     public float getFloat() {
@@ -106,7 +123,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single double value from the wrapped buffer.
-     * 
+     *
      * @return the <code>double</code>
      */
     public Double getDouble() {
@@ -115,7 +132,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single symbol (Java {@link String}) from the byte buffer.
-     * 
+     *
      * @return {@link String}
      * @throws UnsupportedEncodingException
      *             if the encoding is unsupported
@@ -131,7 +148,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves single {@link UUID} from the byte buffer.
-     * 
+     *
      * @return {@link UUID}
      */
     public UUID getUUID() {
@@ -142,7 +159,7 @@ public final class ByteInputStream {
 
     /**
      * Retrieves byte order for the wrapped buffer.
-     * 
+     *
      * @return {@link ByteOrder}
      */
     public ByteOrder getOrder() {
@@ -151,7 +168,7 @@ public final class ByteInputStream {
 
     /**
      * Sets the byte order for reading the wrapeed buffer.
-     * 
+     *
      * @param endianess
      *            byte order
      */
