@@ -157,7 +157,7 @@ public class QBasicConnection implements QConnection {
      * {@inheritDoc}
      */
     public boolean isConnected() {
-        return connection != null && connection.isConnected();
+        return connection != null && connection.isConnected() && !connection.isClosed();
     }
 
     /**
