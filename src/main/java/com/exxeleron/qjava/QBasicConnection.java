@@ -1,17 +1,17 @@
 /**
- *  Copyright (c) 2011-2014 Exxeleron GmbH
- * 
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- * 
- *    http://www.apache.org/licenses/LICENSE-2.0
- * 
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Copyright (c) 2011-2014 Exxeleron GmbH
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.exxeleron.qjava;
 
@@ -19,7 +19,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 /**
  * Base connector class for interfacing with the kdb+ service. Provides methods for synchronous and asynchronous
@@ -34,6 +33,7 @@ public class QBasicConnection implements QConnection {
     private final String username;
     private final String password;
     private final String encoding;
+    private final boolean isForceFlush;
 
     protected int protocolVersion;
 
@@ -45,7 +45,36 @@ public class QBasicConnection implements QConnection {
 
     /**
      * Initializes a new {@link QBasicConnection} instance.
-     * 
+     *
+     * @param host
+     *            Host of remote q service
+     * @param port
+     *            Port of remote q service
+     * @param username
+     *            Username for remote authorization
+     * @param password
+     *            Password for remote authorization
+     * @param encoding
+     *            Encoding used for serialization/deserialization of string objects
+     * @param isForceFlush
+     *            Forces stream flush after each write
+     */
+    public QBasicConnection(final String host, final int port, final String username, final String password, final String encoding,
+            final boolean isForceFlush) {
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.encoding = encoding;
+        this.isForceFlush = isForceFlush;
+
+        this.reader = new DefaultQReader();
+        this.writer = new DefaultQWriter();
+    }
+
+    /**
+     * Initializes a new {@link QBasicConnection} instance.
+     *
      * @param host
      *            Host of remote q service
      * @param port
@@ -58,19 +87,12 @@ public class QBasicConnection implements QConnection {
      *            Encoding used for serialization/deserialization of string objects
      */
     public QBasicConnection(final String host, final int port, final String username, final String password, final String encoding) {
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-        this.encoding = encoding;
-        
-        this.reader = new DefaultQReader();
-        this.writer = new DefaultQWriter();
+        this(host, port, username, password, encoding, false);
     }
 
     /**
      * Initializes a new {@link QBasicConnection} instance with encoding set to "ISO-8859-1".
-     * 
+     *
      * @param host
      *            Host of remote q service
      * @param port
@@ -81,23 +103,24 @@ public class QBasicConnection implements QConnection {
      *            Password for remote authorization
      */
     public QBasicConnection(final String host, final int port, final String username, final String password) {
-        this(host, port, username, password, DEFAULT_ENCODING);
+        this(host, port, username, password, DEFAULT_ENCODING, false);
     }
 
     /**
      * {@inheritDoc}
      */
     public void open() throws IOException, QException {
-        if ( !isConnected() ) {
-            if ( host != null ) {
+        if (!isConnected()) {
+            if (host != null) {
                 initSocket();
                 initialize();
 
                 reader.setStream(inputStream);
                 reader.setEncoding(encoding);
-                
+
                 writer.setStream(outputStream);
                 writer.setEncoding(encoding);
+                writer.setForceFlush(isForceFlush);
                 writer.setProtocolVersion(protocolVersion);
             } else {
                 throw new QConnectionException("Host cannot be null");
@@ -118,13 +141,13 @@ public class QBasicConnection implements QConnection {
         final byte[] response = new byte[2];
 
         outputStream.write(request);
-        if ( inputStream.read(response, 0, 1) != 1 ) {
+        if (inputStream.read(response, 0, 1) != 1) {
             close();
             initSocket();
 
             request = (credentials + "\0").getBytes(encoding);
             outputStream.write(request);
-            if ( inputStream.read(response, 0, 1) != 1 ) {
+            if (inputStream.read(response, 0, 1) != 1) {
                 throw new QConnectionException("Connection denied.");
             }
         }
@@ -136,7 +159,7 @@ public class QBasicConnection implements QConnection {
      * {@inheritDoc}
      */
     public void close() throws IOException {
-        if ( isConnected() ) {
+        if (isConnected()) {
             connection.close();
             connection = null;
         }
@@ -146,7 +169,7 @@ public class QBasicConnection implements QConnection {
      * {@inheritDoc}
      */
     public void reset() throws IOException, QException {
-        if ( connection != null ) {
+        if (connection != null) {
             connection.close();
         }
         connection = null;
@@ -163,11 +186,11 @@ public class QBasicConnection implements QConnection {
     /**
      * {@inheritDoc}
      */
-    public Object sync( final String query, final Object... parameters ) throws QException, IOException {
+    public Object sync(final String query, final Object... parameters) throws QException, IOException {
         query(QConnection.MessageType.SYNC, query, parameters);
         final QMessage response = reader.read(false);
 
-        if ( response.getMessageType() == QConnection.MessageType.RESPONSE ) {
+        if (response.getMessageType() == QConnection.MessageType.RESPONSE) {
             return response.getData();
         } else {
             writer.write(new QException("nyi: qJava expected response message"),
@@ -179,23 +202,23 @@ public class QBasicConnection implements QConnection {
     /**
      * {@inheritDoc}
      */
-    public void async( final String query, final Object... parameters ) throws QException, IOException {
+    public void async(final String query, final Object... parameters) throws QException, IOException {
         query(QConnection.MessageType.ASYNC, query, parameters);
     }
 
     /**
      * {@inheritDoc}
      */
-    public int query( final QConnection.MessageType msgType, final String query, final Object... parameters ) throws QException, IOException {
-        if ( !isConnected() ) {
+    public int query(final QConnection.MessageType msgType, final String query, final Object... parameters) throws QException, IOException {
+        if (!isConnected()) {
             throw new IOException("Connection is not established.");
         }
 
-        if ( parameters.length > 8 ) {
+        if (parameters.length > 8) {
             throw new QWriterException("Too many parameters.");
         }
 
-        if ( parameters.length == 0 ) // simple string query
+        if (parameters.length == 0) // simple string query
         {
             return writer.write(query.toCharArray(), msgType);
         } else {
@@ -203,7 +226,7 @@ public class QBasicConnection implements QConnection {
             request[0] = query.toCharArray();
 
             int i = 1;
-            for ( final Object param : parameters ) {
+            for (final Object param : parameters) {
                 request[i++] = param;
             }
 
@@ -214,7 +237,7 @@ public class QBasicConnection implements QConnection {
     /**
      * {@inheritDoc}
      */
-    public Object receive( final boolean dataOnly, final boolean raw ) throws IOException, QException {
+    public Object receive(final boolean dataOnly, final boolean raw) throws IOException, QException {
         return dataOnly ? reader.read(raw).getData() : reader.read(raw);
     }
 
@@ -227,7 +250,7 @@ public class QBasicConnection implements QConnection {
 
     /**
      * Returns a String that represents the current {@link QBasicConnection}.
-     * 
+     *
      * @return a String that represents the current {@link QBasicConnection}
      */
     @Override
@@ -279,7 +302,7 @@ public class QBasicConnection implements QConnection {
 
     /**
      * Retrieves {@link QReader} for IPC stream deserializing.
-     * 
+     *
      * @return {@link QReader} used for deserialization
      */
     public QReader getReader() {
@@ -288,17 +311,17 @@ public class QBasicConnection implements QConnection {
 
     /**
      * Sets the {@link QReader} for IPC stream deserialization
-     * 
+     *
      * @param reader
      *            the {@link QReader}
      */
-    public void setReader( QReader reader ) {
+    public void setReader(QReader reader) {
         this.reader = reader;
     }
 
     /**
      * Retrieves {@link QWriter} used for serialization into IPC stream.
-     * 
+     *
      * @return {@link QWriter} used for serialization
      */
     public QWriter getWriter() {
@@ -307,11 +330,11 @@ public class QBasicConnection implements QConnection {
 
     /**
      * Sets the {@link QWriter} used for serialization into IPC stream.
-     * 
+     *
      * @param writer
      *            the {@link QWriter}
      */
-    public void setWriter( QWriter writer ) {
+    public void setWriter(QWriter writer) {
         this.writer = writer;
     }
 

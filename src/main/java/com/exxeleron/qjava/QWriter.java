@@ -27,7 +27,10 @@ import java.io.OutputStream;
 public abstract class QWriter {
 
     protected OutputStream stream;
+
     private String encoding = QBasicConnection.DEFAULT_ENCODING;
+    private boolean forceFlush = false;
+
     protected ByteOutputStream writer = new ByteOutputStream();
     protected ByteOutputStream header = new ByteOutputStream(8);
 
@@ -61,6 +64,14 @@ public abstract class QWriter {
      */
     protected String getEncoding() {
         return encoding;
+    }
+
+    void setForceFlush(final boolean forceFlush) {
+        this.forceFlush = forceFlush;
+    }
+
+    protected boolean isForceFlush() {
+        return forceFlush;
     }
 
     /**
@@ -113,6 +124,10 @@ public abstract class QWriter {
         // write message
         stream.write(header.buffer(), 0, 8);
         stream.write(writer.buffer(), 0, writer.count());
+
+        if (isForceFlush()) {
+            stream.flush();
+        }
 
         return messageSize;
     }
