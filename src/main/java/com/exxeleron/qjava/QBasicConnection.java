@@ -34,6 +34,7 @@ public class QBasicConnection implements QConnection {
     private final String password;
     private final String encoding;
     private final boolean isForceFlush;
+    private int readTimeout;
 
     protected int protocolVersion;
 
@@ -42,6 +43,38 @@ public class QBasicConnection implements QConnection {
     protected OutputStream outputStream;
     protected QReader reader;
     protected QWriter writer;
+
+    /**
+     * Initializes a new {@link QBasicConnection} instance.
+     *
+     * @param host
+     *            Host of remote q service
+     * @param port
+     *            Port of remote q service
+     * @param username
+     *            Username for remote authorization
+     * @param password
+     *            Password for remote authorization
+     * @param encoding
+     *            Encoding used for serialization/deserialization of string objects
+     * @param isForceFlush
+     *            Forces stream flush after each write
+     * @param readTimeout
+     *            Sets read timeout on the remote connection
+     */
+    public QBasicConnection(final String host, final int port, final String username, final String password, final String encoding,
+            final boolean isForceFlush, final int readTimeout) {
+        this.host = host;
+        this.port = port;
+        this.username = username;
+        this.password = password;
+        this.encoding = encoding;
+        this.isForceFlush = isForceFlush;
+        this.readTimeout = readTimeout;
+
+        this.reader = new DefaultQReader();
+        this.writer = new DefaultQWriter();
+    }
 
     /**
      * Initializes a new {@link QBasicConnection} instance.
@@ -131,6 +164,8 @@ public class QBasicConnection implements QConnection {
     private void initSocket() throws IOException {
         connection = new Socket(host, port);
         connection.setTcpNoDelay(true);
+        connection.setSoTimeout(readTimeout);
+
         inputStream = new DataInputStream(connection.getInputStream());
         outputStream = connection.getOutputStream();
     }
