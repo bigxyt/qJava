@@ -94,15 +94,7 @@ public class QBasicConnection implements QConnection {
      */
     public QBasicConnection(final String host, final int port, final String username, final String password, final String encoding,
             final boolean isForceFlush) {
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-        this.encoding = encoding;
-        this.isForceFlush = isForceFlush;
-
-        this.reader = new DefaultQReader();
-        this.writer = new DefaultQWriter();
+        this(host, port, username, password, encoding, isForceFlush, 0);
     }
 
     /**
